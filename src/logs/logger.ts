@@ -1,15 +1,6 @@
 import winston, { transports } from 'winston';
-// import * as fs from 'node:fs';
-// import path from 'node:path';
 
-// const logDir = '../../src/logs';
-
-// if (!fs.existsSync(logDir)) {
-//   fs.mkdirSync(logDir);
-// }
-
-const { combine, timestamp, json } = winston.format;
-const { printf, colorize, align } = winston.format;
+const { combine, timestamp, json, printf, colorize, align } = winston.format;
 
 winston.loggers.add('basicLogger', {
   level: process.env.LOG_LEVEL || 'info',

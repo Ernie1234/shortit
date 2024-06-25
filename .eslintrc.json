@@ -21,7 +21,8 @@
     "no-console": "error",
     "comma-dangle": "off",
     "unicorn/prevent-abbreviations": "off",
-    "import/extensions": "off"
+    "import/extensions": "off",
+    "ObjectExpression": { "multiline": true, "minProperties": 1 }
   },
   "settings": {
     "import/resolver": {
