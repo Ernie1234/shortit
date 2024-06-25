@@ -2,7 +2,7 @@ import winston, { transports } from 'winston';
 
 const { combine, timestamp, json, printf, colorize, align } = winston.format;
 
-winston.loggers.add('basicLogger', {
+export const basicLogger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: combine(
     colorize({ all: true }),
