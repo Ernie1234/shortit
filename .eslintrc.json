@@ -18,7 +18,7 @@
   "plugins": ["@typescript-eslint", "unicorn", "sonarjs"],
   "rules": {
     "linebreak-style": "off",
-    "no-console": "warn",
+    "no-console": "error",
     "comma-dangle": "off",
     "unicorn/prevent-abbreviations": "off",
     "import/extensions": "off"
