@@ -8,6 +8,4 @@ node_modules
 dist
 .idea
 
-src/logs
-
-
+*.log
