@@ -22,7 +22,7 @@
     "comma-dangle": "off",
     "unicorn/prevent-abbreviations": "off",
     "import/extensions": "off",
-    "ObjectExpression": { "multiline": true, "minProperties": 1 }
+    "object-curly-newline": "off"
   },
   "settings": {
     "import/resolver": {
