@@ -1,8 +1,8 @@
 import winston, { transports } from 'winston';
 
-const { combine, timestamp, json, printf, colorize, align } = winston.format;
+const { combine, timestamp, json, printf, colorize } = winston.format;
 
-export const basicLogger = winston.createLogger({
+const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: combine(
     colorize({ all: true }),
@@ -10,7 +10,6 @@ export const basicLogger = winston.createLogger({
       format: 'YYYY-MM-DD hh:mm:ss.SSS A',
     }),
     json(),
-    align(),
     printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`),
   ),
   transports: [
@@ -27,3 +26,5 @@ export const basicLogger = winston.createLogger({
     }),
   ],
 });
+
+export default logger;
