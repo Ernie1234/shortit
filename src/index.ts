@@ -16,5 +16,5 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  logger.info('info', `Server is started at port: http://localhost:${port}`);
+  logger.info(`Server is started at port: http://localhost:${port}`);
 });
