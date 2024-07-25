@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
+import logger from './logs/logger';
+
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 8000;
@@ -14,5 +16,5 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is started at port: http://localhost:${port}`);
+  logger.info(`Server is started at port: http://localhost:${port}`);
 });
