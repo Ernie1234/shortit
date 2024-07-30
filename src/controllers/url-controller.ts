@@ -1,16 +1,42 @@
 import { Request, Response } from 'express';
-import logger from '../logs/logger';
 import prisma from '../libs/prisma-client';
+
+import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
+import logger from '../logs/logger';
 
 const msg = 'Url successfully fetched';
 
 //  CREATE A SHORTEN URL FROM A LONG URL
 export const createUrl = async (req: Request, res: Response) => {
-  const { url } = req.body;
+  const { url, customName } = req.body;
 
   if (!url) return res.status(400).send({ message: 'Url is required!' });
   try {
-    return res.status(201).json({ message: msg });
+    const existingUrl = await prisma.url.findFirst({
+      where: {
+        originalUrl: url,
+      },
+    });
+    if (existingUrl) {
+      return res.status(400).send({ message: 'Url already exists!' });
+    }
+
+    const urlString = generateShortUrl();
+
+    const custom = customName && convertToHyphenated(customName);
+
+    const originalUrl = url;
+    const shortUrl = `https://shortit/${urlString}`;
+    const customNameUrl = custom ? `https://shortit/${custom}` : '';
+
+    const shortenUrl = await prisma.url.create({
+      data: {
+        originalUrl,
+        shortUrl,
+        customName: customNameUrl,
+      },
+    });
+    return res.status(201).json({ message: msg, shortenUrl });
   } catch (error) {
     logger.info(error);
     return res.status(400).send({ message: 'Error adding url' });

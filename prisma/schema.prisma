@@ -17,7 +17,7 @@ model Url {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  customName     String @unique
+  customName     String? @unique
 shortUrl  String
 originalUrl  String
 }
