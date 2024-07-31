@@ -4,7 +4,8 @@ import prisma from '../libs/prisma-client';
 import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
 import logger from '../logs/logger';
 
-const msg = 'Url successfully fetched';
+const successMsg = 'Url successfully fetched';
+const notFoundMsg = 'No Url found!';
 
 //  CREATE A SHORTEN URL FROM A LONG URL
 export const createUrl = async (req: Request, res: Response) => {
@@ -26,8 +27,8 @@ export const createUrl = async (req: Request, res: Response) => {
     const custom = customName && convertToHyphenated(customName);
 
     const originalUrl = url;
-    const shortUrl = `https://shortit/${urlString}`;
-    const customNameUrl = custom ? `https://shortit/${custom}` : '';
+    const shortUrl = custom ? `https://shortit/${custom}` : `https://shortit/${urlString}`;
+    const customNameUrl = custom ? `${custom}` : '';
 
     const shortenUrl = await prisma.url.create({
       data: {
@@ -36,7 +37,7 @@ export const createUrl = async (req: Request, res: Response) => {
         customName: customNameUrl,
       },
     });
-    return res.status(201).json({ message: msg, shortenUrl });
+    return res.status(201).json({ message: successMsg, shortenUrl });
   } catch (error) {
     logger.info(error);
     return res.status(400).send({ message: 'Error adding url' });
@@ -55,7 +56,7 @@ export const getUrls = async (req: Request, res: Response) => {
     if (!url) return res.status(404).send({ message: 'No url found!' });
 
     return res.status(200).send({
-      message: msg,
+      message: successMsg,
       result: url.length,
       url,
     });
@@ -76,7 +77,9 @@ export const getUrl = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).send({ message: msg, url });
+    if (!url) return res.status(404).send({ message: notFoundMsg });
+
+    return res.status(200).send({ message: successMsg, url });
   } catch (error) {
     logger.info(error);
     return res.status(400).send({ message: 'Error occurred while fetching url' });
@@ -86,23 +89,36 @@ export const getUrl = async (req: Request, res: Response) => {
 // UPDATING A SINGLE URL FROM THE DATABASE
 export const updateUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { shortUrl, customName } = req.body;
+  const { url, customName } = req.body;
 
-  if (!id) return res.status(404).send({ message: 'Url not found' });
-  if (!shortUrl && !customName) return res.status(400).send({ message: 'At least one field should be updated' });
+  if (!id) return res.status(404).send({ message: notFoundMsg });
+  if (!url && !customName) return res.status(400).send({ message: 'At least one field should be updated' });
+
+  const custom = customName && convertToHyphenated(customName);
+  const shortUrl = `https://shortit/${custom}`;
 
   try {
+    const existingUrl = await prisma.url.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!existingUrl || existingUrl?.originalUrl !== url) {
+      return res.status(404).send({ message: notFoundMsg });
+    }
+
     const updatedUrl = await prisma.url.update({
       where: {
         id,
       },
       data: {
+        customName: custom,
         shortUrl,
-        customName,
       },
     });
 
-    return res.status(200).send({ message: msg, updatedUrl });
+    return res.status(200).send({ message: 'Url updated successfully', updatedUrl });
   } catch (error) {
     logger.info(error);
     return res.status(400).send({ message: 'Error occurred while updating url' });
@@ -112,15 +128,23 @@ export const updateUrl = async (req: Request, res: Response) => {
 // DELETING A SINGLE URL FROM THE DATABASE
 export const deleteUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
-  if (!id) return res.status(404).send({ message: 'Url not found' });
+  if (!id) return res.status(404).send({ message: notFoundMsg });
 
   try {
+    const existingUrl = await prisma.url.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!existingUrl) return res.status(404).send({ message: notFoundMsg });
+
     await prisma.url.delete({
       where: {
         id,
       },
     });
-    return res.status(200).send({ message: msg });
+    return res.status(200).send({ message: 'Url deleted successfully' });
   } catch (error) {
     logger.info(error);
     return res.status(400).send({ message: 'Error while deleting url' });
