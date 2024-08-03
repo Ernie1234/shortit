@@ -3,23 +3,23 @@ import prisma from '../libs/prisma-client';
 
 import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
 import logger from '../logs/logger';
+import HTTP_STATUS from '../utils/http-status';
 
 const successMsg = 'Url successfully fetched';
 const notFoundMsg = 'No Url found!';
 
 //  CREATE A SHORTEN URL FROM A LONG URL
 export const createUrl = async (req: Request, res: Response) => {
-  const { url, customName } = req.body;
-
-  if (!url) return res.status(400).send({ message: 'Url is required!' });
   try {
+    const { url, customName } = req.body;
+
     const existingUrl = await prisma.url.findFirst({
       where: {
         originalUrl: url,
       },
     });
     if (existingUrl) {
-      return res.status(400).send({ message: 'Url already exists!' });
+      return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Url already exists!' });
     }
 
     const urlString = generateShortUrl();
@@ -37,10 +37,10 @@ export const createUrl = async (req: Request, res: Response) => {
         customName: customNameUrl,
       },
     });
-    return res.status(201).json({ message: successMsg, shortenUrl });
+    return res.status(HTTP_STATUS.CREATED).json({ message: successMsg, shortenUrl });
   } catch (error) {
     logger.info(error);
-    return res.status(400).send({ message: 'Error adding url' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error adding url' });
   }
 };
 
@@ -53,16 +53,16 @@ export const getUrls = async (req: Request, res: Response) => {
       },
     });
 
-    if (!url) return res.status(404).send({ message: 'No url found!' });
+    if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
-    return res.status(200).send({
+    return res.status(HTTP_STATUS.OK).send({
       message: successMsg,
       result: url.length,
       url,
     });
   } catch (error) {
     logger.info(error);
-    return res.status(400).send({ message: 'Error getting url' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error getting url' });
   }
 };
 
