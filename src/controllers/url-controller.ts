@@ -42,7 +42,7 @@ export const createUrl = async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.CREATED).json({ message: successMsg, shortenUrl });
   } catch (error) {
     logger.info(error);
-    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error adding url' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error adding url' });
   }
 };
 
@@ -64,7 +64,7 @@ export const getUrls = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.info(error);
-    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error getting url' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error getting url' });
   }
 };
 
@@ -84,7 +84,7 @@ export const getUrl = async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.OK).send({ message: successMsg, url });
   } catch (error) {
     logger.info(error);
-    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error occurred while fetching url' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while fetching url' });
   }
 };
 
@@ -94,7 +94,9 @@ export const updateUrl = async (req: Request, res: Response) => {
   const { url, customName } = req.body;
 
   if (!id) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
-  if (!url && !customName) return res.status(400).send({ message: 'At least one field should be updated' });
+  if (!url && !customName) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'At least one field should be updated' });
+  }
 
   const custom = customName && convertToHyphenated(customName);
   const shortUrl = `${BASE_URL}/${custom}`;
@@ -122,15 +124,14 @@ export const updateUrl = async (req: Request, res: Response) => {
 
     return res.status(200).send({ message: 'Url updated successfully', updatedUrl });
   } catch (error) {
-    logger.info(error);
-    return res.status(400).send({ message: 'Error occurred while updating url' });
+    logger.error(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while updating url' });
   }
 };
 
 // DELETING A SINGLE URL FROM THE DATABASE
 export const deleteUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
-  if (!id) return res.status(404).send({ message: notFoundMsg });
 
   try {
     const existingUrl = await prisma.url.findUnique({
@@ -139,16 +140,16 @@ export const deleteUrl = async (req: Request, res: Response) => {
       },
     });
 
-    if (!existingUrl) return res.status(404).send({ message: notFoundMsg });
+    if (!existingUrl) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
     await prisma.url.delete({
       where: {
         id,
       },
     });
-    return res.status(200).send({ message: 'Url deleted successfully' });
+    return res.status(HTTP_STATUS.OK).send({ message: 'Url deleted successfully' });
   } catch (error) {
     logger.info(error);
-    return res.status(400).send({ message: 'Error while deleting url' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while deleting url' });
   }
 };
