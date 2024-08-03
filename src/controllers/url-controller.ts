@@ -5,6 +5,8 @@ import { convertToHyphenated, generateShortUrl } from '../utils/short-url-genera
 import logger from '../logs/logger';
 import HTTP_STATUS from '../utils/http-status';
 
+const BASE_URL = process.env.BASE_URL as string;
+
 const successMsg = 'Url successfully fetched';
 const notFoundMsg = 'No Url found!';
 
@@ -27,7 +29,7 @@ export const createUrl = async (req: Request, res: Response) => {
     const custom = customName && convertToHyphenated(customName);
 
     const originalUrl = url;
-    const shortUrl = custom ? `https://shortit/${custom}` : `https://shortit/${urlString}`;
+    const shortUrl = custom ? `${BASE_URL}/${custom}` : `${BASE_URL}/${urlString}`;
     const customNameUrl = custom ? `${custom}` : '';
 
     const shortenUrl = await prisma.url.create({
@@ -47,18 +49,18 @@ export const createUrl = async (req: Request, res: Response) => {
 //  GET ALL THE URLS IN THE DATABASE
 export const getUrls = async (req: Request, res: Response) => {
   try {
-    const url = await prisma.url.findMany({
+    const urls = await prisma.url.findMany({
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
+    if (!urls) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
     return res.status(HTTP_STATUS.OK).send({
       message: successMsg,
-      result: url.length,
-      url,
+      result: urls.length,
+      urls,
     });
   } catch (error) {
     logger.info(error);
@@ -77,12 +79,12 @@ export const getUrl = async (req: Request, res: Response) => {
       },
     });
 
-    if (!url) return res.status(404).send({ message: notFoundMsg });
+    if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
-    return res.status(200).send({ message: successMsg, url });
+    return res.status(HTTP_STATUS.OK).send({ message: successMsg, url });
   } catch (error) {
     logger.info(error);
-    return res.status(400).send({ message: 'Error occurred while fetching url' });
+    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Error occurred while fetching url' });
   }
 };
 
@@ -91,11 +93,11 @@ export const updateUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { url, customName } = req.body;
 
-  if (!id) return res.status(404).send({ message: notFoundMsg });
+  if (!id) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
   if (!url && !customName) return res.status(400).send({ message: 'At least one field should be updated' });
 
   const custom = customName && convertToHyphenated(customName);
-  const shortUrl = `https://shortit/${custom}`;
+  const shortUrl = `${BASE_URL}/${custom}`;
 
   try {
     const existingUrl = await prisma.url.findUnique({

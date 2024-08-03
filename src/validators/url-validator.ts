@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-const UrlSchema = Joi.object({
+export const UrlSchema = Joi.object({
   url: Joi.string()
     .uri({ scheme: ['http', 'https'] })
     .required()
@@ -8,7 +8,10 @@ const UrlSchema = Joi.object({
       'string.uri': 'Invalid URL format',
       'any.required': 'URL is required',
     }),
-  customName: Joi.string().optional(),
+  customName: Joi.string().optional().min(5).message('Must be at least 5 letters'),
 });
 
-export default UrlSchema;
+export const updateUrlSchema = Joi.object({
+  url: Joi.string().uri({ scheme: ['http', 'https'] }),
+  customName: Joi.string().optional().min(5).message('Must be at least 5 letters'),
+});
