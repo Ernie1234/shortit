@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
 import prisma from '../libs/prisma-client';
 
-import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
-import logger from '../logs/logger';
+import { notFoundMsg, successMsg } from '../constants/messages';
 import HTTP_STATUS from '../utils/http-status';
+import logger from '../logs/logger';
+import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
 
 const BASE_URL = process.env.BASE_URL as string;
-
-const successMsg = 'Url successfully fetched';
-const notFoundMsg = 'No Url found!';
 
 //  CREATE A SHORTEN URL FROM A LONG URL
 export const createUrl = async (req: Request, res: Response) => {
