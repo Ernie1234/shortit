@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.post('/shorten', validatePostUrl, createUrl);
 router.get('/urls', getUrls);
-router.get('/url/:id', getUrl);
-router.put('/url/:id', validateUpdateUrl, updateUrl);
-router.delete('/url/:id', deleteUrl);
+router.get('/urls/:id', getUrl);
+router.put('/urls/:id', validateUpdateUrl, updateUrl);
+router.delete('/urls/:id', deleteUrl);
 
 export default router;
