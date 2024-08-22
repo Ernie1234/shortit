@@ -16,3 +16,8 @@ export function validateFn<T>(schema: Schema<T>, req: Request, res: Response, ne
   req.body = value as T;
   return next();
 }
+export function getUpdateParams(req: Request) {
+  const { id } = req.params;
+  const { url, customName } = req.body;
+  return { id, url, customName };
+}
