@@ -5,6 +5,7 @@ import { createdMsg, notFoundMsg } from '../constants/messages';
 import HTTP_STATUS from '../utils/http-status';
 import logger from '../logs/logger';
 import { convertToHyphenated, generateShortUrl, getUpdateParams } from '../utils/short-url-generator';
+import { TUrl } from '../utils/types';
 
 const BASE_URL = process.env.BASE_URL as string;
 
@@ -61,7 +62,7 @@ export const getUrls = async (req: Request, res: Response) => {
 
     if (!urls) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
-    const successResponse = urls.map((url) => {
+    const successResponse = urls.map((url: TUrl) => {
       if (url.customName === '' || url.customName === null) {
         return {
           id: url.id,
