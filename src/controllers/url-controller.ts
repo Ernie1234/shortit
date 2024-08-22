@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../libs/prisma-client';
 
-import { notFoundMsg, successMsg } from '../constants/messages';
+import { createdMsg, notFoundMsg, successMsg } from '../constants/messages';
 import HTTP_STATUS from '../utils/http-status';
 import logger from '../logs/logger';
 import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
@@ -37,9 +37,15 @@ export const createUrl = async (req: Request, res: Response) => {
         customName: customNameUrl,
       },
     });
-    return res.status(HTTP_STATUS.CREATED).json({ message: successMsg, shortenUrl });
+
+    const data = {
+      id: shortenUrl.id,
+      shortUrl: shortenUrl.shortUrl,
+    };
+
+    return res.status(HTTP_STATUS.CREATED).json({ message: createdMsg, data });
   } catch (error) {
-    logger.info(error);
+    logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error adding url' });
   }
 };
@@ -55,13 +61,27 @@ export const getUrls = async (req: Request, res: Response) => {
 
     if (!urls) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
-    return res.status(HTTP_STATUS.OK).send({
-      message: successMsg,
-      result: urls.length,
-      urls,
+    const successResponse = urls.map((url) => {
+      if (url.customName === '' || url.customName === null) {
+        return {
+          id: url.id,
+          originalUrl: url.originalUrl,
+          shortUrl: url.shortUrl,
+          createdAt: url.createdAt,
+        };
+      }
+      return {
+        id: url.id,
+        originalUrl: url.originalUrl,
+        shortUrl: url.shortUrl,
+        createdAt: url.createdAt,
+        customName: url.customName,
+      };
     });
+
+    return res.status(HTTP_STATUS.OK).send(successResponse);
   } catch (error) {
-    logger.info(error);
+    logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error getting url' });
   }
 };
@@ -81,7 +101,7 @@ export const getUrl = async (req: Request, res: Response) => {
 
     return res.status(HTTP_STATUS.OK).send({ message: successMsg, url });
   } catch (error) {
-    logger.info(error);
+    logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while fetching url' });
   }
 };
@@ -120,7 +140,15 @@ export const updateUrl = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(200).send({ message: 'Url updated successfully', updatedUrl });
+    const data = {
+      id: updatedUrl.id,
+      shortUrl: updatedUrl.shortUrl,
+      customName: updatedUrl.customName,
+      createdAt: updatedUrl.createdAt,
+      originalUrl: updatedUrl.originalUrl,
+    };
+
+    return res.status(200).send({ message: 'Url updated successfully', data });
   } catch (error) {
     logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while updating url' });
@@ -147,7 +175,7 @@ export const deleteUrl = async (req: Request, res: Response) => {
     });
     return res.status(HTTP_STATUS.OK).send({ message: 'Url deleted successfully' });
   } catch (error) {
-    logger.info(error);
+    logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while deleting url' });
   }
 };
