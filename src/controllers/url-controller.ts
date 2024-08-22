@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import prisma from '../libs/prisma-client';
 
-import { createdMsg, notFoundMsg, successMsg } from '../constants/messages';
+import { createdMsg, notFoundMsg } from '../constants/messages';
 import HTTP_STATUS from '../utils/http-status';
 import logger from '../logs/logger';
-import { convertToHyphenated, generateShortUrl } from '../utils/short-url-generator';
+import { convertToHyphenated, generateShortUrl, getUpdateParams } from '../utils/short-url-generator';
 
 const BASE_URL = process.env.BASE_URL as string;
 
@@ -95,11 +95,18 @@ export const getUrl = async (req: Request, res: Response) => {
       where: {
         id,
       },
+      select: {
+        id: true,
+        customName: true,
+        originalUrl: true,
+        shortUrl: true,
+        createdAt: true,
+      },
     });
 
     if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
-    return res.status(HTTP_STATUS.OK).send({ message: successMsg, url });
+    return res.status(HTTP_STATUS.OK).send({ ...url });
   } catch (error) {
     logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while fetching url' });
@@ -108,13 +115,7 @@ export const getUrl = async (req: Request, res: Response) => {
 
 // UPDATING A SINGLE URL FROM THE DATABASE
 export const updateUrl = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { url, customName } = req.body;
-
-  if (!id) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
-  if (!url && !customName) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'At least one field should be updated' });
-  }
+  const { id, url, customName } = getUpdateParams(req);
 
   const custom = customName && convertToHyphenated(customName);
   const shortUrl = `${BASE_URL}/${custom}`;
