@@ -118,8 +118,10 @@ export const getUrl = async (req: Request, res: Response) => {
 export const updateUrl = async (req: Request, res: Response) => {
   const { id, url, customName } = getUpdateParams(req);
 
+  const urlString = generateShortUrl();
   const custom = customName && convertToHyphenated(customName);
-  const shortUrl = `${BASE_URL}/${custom}`;
+  const shortUrl = custom ? `${BASE_URL}/${custom}` : `${BASE_URL}/${urlString}`;
+  const customNameUrl = custom ? `${custom}` : '';
 
   try {
     const existingUrl = await prisma.url.findUnique({
@@ -128,7 +130,8 @@ export const updateUrl = async (req: Request, res: Response) => {
       },
     });
 
-    if (!existingUrl || existingUrl?.originalUrl !== url) {
+    if (!existingUrl) {
+      logger.error(notFoundMsg);
       return res.status(404).send({ message: notFoundMsg });
     }
 
@@ -137,20 +140,31 @@ export const updateUrl = async (req: Request, res: Response) => {
         id,
       },
       data: {
-        customName: custom,
+        originalUrl: url,
+        customName: customNameUrl,
         shortUrl,
       },
     });
 
-    const data = {
+    if (updatedUrl?.customName === '' || updatedUrl?.customName === null) {
+      const successResponse = {
+        id: updatedUrl.id,
+        originalUrl: updatedUrl.originalUrl,
+        shortUrl: updatedUrl.shortUrl,
+        createdAt: updatedUrl.createdAt,
+      };
+      return res.status(200).send({ message: 'Url updated successfully', successResponse });
+    }
+
+    const successResponse = {
       id: updatedUrl.id,
-      shortUrl: updatedUrl.shortUrl,
-      customName: updatedUrl.customName,
-      createdAt: updatedUrl.createdAt,
       originalUrl: updatedUrl.originalUrl,
+      shortUrl: updatedUrl.shortUrl,
+      createdAt: updatedUrl.createdAt,
+      customName: updatedUrl.customName,
     };
 
-    return res.status(200).send({ message: 'Url updated successfully', data });
+    return res.status(200).send({ message: 'Url updated successfully', successResponse });
   } catch (error) {
     logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while updating url' });
