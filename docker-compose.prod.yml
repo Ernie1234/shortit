@@ -1,9 +1,0 @@
-services:
-  web:
-    image: ernie/nodemon:0.0.1
-    build:
-      context: ./
-      target: prod
-    ports:
-      - '8080:8080'
-# docker-compose -f docker-compose.yml up --build

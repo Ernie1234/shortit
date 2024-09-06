@@ -22,7 +22,8 @@
     "comma-dangle": "off",
     "unicorn/prevent-abbreviations": "off",
     "import/extensions": "off",
-    "object-curly-newline": "off"
+    "object-curly-newline": "off",
+    "no-underscore-dangle": "off"
   },
   "settings": {
     "import/resolver": {
