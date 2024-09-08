@@ -1,11 +1,10 @@
 import { Request, Response } from 'express';
-import prisma from '../libs/prisma-client';
 
 import { createdMsg, notFoundMsg } from '../constants/messages';
 import HTTP_STATUS from '../utils/http-status';
 import logger from '../logs/logger';
 import { convertToHyphenated, generateShortUrl, getUpdateParams } from '../utils/short-url-generator';
-import { TUrl } from '../utils/types';
+import Url from '../models/url';
 
 const BASE_URL = process.env.BASE_URL as string;
 
@@ -14,11 +13,10 @@ export const createUrl = async (req: Request, res: Response) => {
   try {
     const { url, customName } = req.body;
 
-    const existingUrl = await prisma.url.findFirst({
-      where: {
-        originalUrl: url,
-      },
+    const existingUrl = await Url.findOne({
+      originalUrl: url,
     });
+
     if (existingUrl) {
       return res.status(HTTP_STATUS.BAD_REQUEST).send({ message: 'Url already exists!' });
     }
@@ -31,16 +29,14 @@ export const createUrl = async (req: Request, res: Response) => {
     const shortUrl = custom ? `${BASE_URL}/${custom}` : `${BASE_URL}/${urlString}`;
     const customNameUrl = custom ? `${custom}` : '';
 
-    const shortenUrl = await prisma.url.create({
-      data: {
-        originalUrl,
-        shortUrl,
-        customName: customNameUrl,
-      },
+    const shortenUrl = await Url.create({
+      originalUrl,
+      shortUrl,
+      customName: customNameUrl,
     });
 
     const data = {
-      id: shortenUrl.id,
+      _id: shortenUrl.id,
       shortUrl: shortenUrl.shortUrl,
     };
 
@@ -54,31 +50,21 @@ export const createUrl = async (req: Request, res: Response) => {
 //  GET ALL THE URLS IN THE DATABASE
 export const getUrls = async (req: Request, res: Response) => {
   try {
-    const urls = await prisma.url.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const urls = await Url.find();
 
     if (!urls) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
-    const successResponse = urls.map((url: TUrl) => {
-      if (url.customName === '' || url.customName === null) {
-        return {
-          id: url.id,
-          originalUrl: url.originalUrl,
-          shortUrl: url.shortUrl,
-          createdAt: url.createdAt,
-        };
-      }
-      return {
-        id: url.id,
-        originalUrl: url.originalUrl,
-        shortUrl: url.shortUrl,
-        createdAt: url.createdAt,
-        customName: url.customName,
-      };
-    });
+    if (urls.length === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No URL found!' });
+    }
+
+    const successResponse = urls.map((url) => ({
+      _id: url.id,
+      originalUrl: url.originalUrl,
+      shortUrl: url.shortUrl,
+      createdAt: url.createdAt,
+      ...(url.customName ? { customName: url.customName } : {}), // Conditionally add customName
+    }));
 
     return res.status(HTTP_STATUS.OK).send(successResponse);
   } catch (error) {
@@ -92,22 +78,19 @@ export const getUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const url = await prisma.url.findUnique({
-      where: {
-        id,
-      },
-      select: {
-        id: true,
-        customName: true,
-        originalUrl: true,
-        shortUrl: true,
-        createdAt: true,
-      },
-    });
+    const url = await Url.findById({ _id: id });
 
     if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
-    return res.status(HTTP_STATUS.OK).send({ ...url });
+    const formattedUrl = {
+      id: url._id.toString(),
+      customName: url.customName || undefined,
+      originalUrl: url.originalUrl,
+      shortUrl: url.shortUrl,
+      createdAt: url.createdAt.toISOString(), // Format date to ISO string
+    };
+
+    return res.status(HTTP_STATUS.OK).json(formattedUrl);
   } catch (error) {
     logger.error(error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error occurred while fetching url' });
@@ -124,27 +107,21 @@ export const updateUrl = async (req: Request, res: Response) => {
   const customNameUrl = custom ? `${custom}` : '';
 
   try {
-    const existingUrl = await prisma.url.findUnique({
-      where: {
-        id,
-      },
-    });
+    const existingUrl = await Url.findOne({ _id: id });
 
     if (!existingUrl) {
       logger.error(notFoundMsg);
       return res.status(404).send({ message: notFoundMsg });
     }
 
-    const updatedUrl = await prisma.url.update({
-      where: {
-        id,
-      },
-      data: {
-        originalUrl: url,
+    const updatedUrl = await Url.findOneAndUpdate(
+      { _id: id },
+      {
         customName: customNameUrl,
         shortUrl,
+        originalUrl: url,
       },
-    });
+    );
 
     if (updatedUrl?.customName === '' || updatedUrl?.customName === null) {
       const successResponse = {
@@ -157,11 +134,11 @@ export const updateUrl = async (req: Request, res: Response) => {
     }
 
     const successResponse = {
-      id: updatedUrl.id,
-      originalUrl: updatedUrl.originalUrl,
-      shortUrl: updatedUrl.shortUrl,
-      createdAt: updatedUrl.createdAt,
-      customName: updatedUrl.customName,
+      id: updatedUrl?._id,
+      originalUrl: updatedUrl?.originalUrl,
+      shortUrl: updatedUrl?.shortUrl,
+      createdAt: updatedUrl?.createdAt,
+      customName: updatedUrl?.customName,
     };
 
     return res.status(200).send({ message: 'Url updated successfully', successResponse });
@@ -176,19 +153,10 @@ export const deleteUrl = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const existingUrl = await prisma.url.findUnique({
-      where: {
-        id,
-      },
-    });
+    const existingUrl = await Url.findOneAndDelete({ _id: id });
 
     if (!existingUrl) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
-    await prisma.url.delete({
-      where: {
-        id,
-      },
-    });
     return res.status(HTTP_STATUS.OK).send({ message: 'Url deleted successfully' });
   } catch (error) {
     logger.error(error);

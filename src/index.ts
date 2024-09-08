@@ -4,6 +4,7 @@ import cors from 'cors';
 
 import logger from './logs/logger';
 import urlRoute from './routes/url-route';
+import connectDb from './db/connect';
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,15 @@ app.get('/', (req: Request, res: Response) => {
 });
 app.use('/api/v1', urlRoute);
 
-app.listen(port, () => {
-  logger.info(`Server is started at port: http://localhost:${port}`);
-});
+const start = async () => {
+  try {
+    await connectDb(process.env.DATABASE_URI || '');
+    app.listen(port, () => {
+      logger.info(`Server is started at port: http://localhost:${port}`);
+    });
+  } catch (error) {
+    logger.error(error);
+  }
+};
+
+start();
