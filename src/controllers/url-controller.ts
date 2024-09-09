@@ -6,8 +6,6 @@ import logger from '../logs/logger';
 import { convertToHyphenated, generateShortUrl, getUpdateParams } from '../utils/short-url-generator';
 import Url from '../models/url';
 
-const BASE_URL = process.env.BASE_URL as string;
-
 //  CREATE A SHORTEN URL FROM A LONG URL
 export const createUrl = async (req: Request, res: Response) => {
   try {
@@ -26,8 +24,8 @@ export const createUrl = async (req: Request, res: Response) => {
     const custom = customName && convertToHyphenated(customName);
 
     const originalUrl = url;
-    const shortUrl = custom ? `${BASE_URL}/${custom}` : `${BASE_URL}/${urlString}`;
-    const customNameUrl = custom ? `${custom}` : '';
+    const shortUrl = custom ? `${process.env.BASE_URL}/${custom}` : `${process.env.BASE_URL}/${urlString}`;
+    const customNameUrl = custom ? `${custom}` : undefined;
 
     const shortenUrl = await Url.create({
       originalUrl,
@@ -103,7 +101,7 @@ export const updateUrl = async (req: Request, res: Response) => {
 
   const urlString = generateShortUrl();
   const custom = customName && convertToHyphenated(customName);
-  const shortUrl = custom ? `${BASE_URL}/${custom}` : `${BASE_URL}/${urlString}`;
+  const shortUrl = custom ? `${process.env.BASE_URL}/${custom}` : `${process.env.BASE_URL}/${urlString}`;
   const customNameUrl = custom ? `${custom}` : '';
 
   try {
