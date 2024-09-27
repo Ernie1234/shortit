@@ -9,11 +9,7 @@
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "lint": "eslint . --max-warnings=0",
-    "lint:fix": "eslint --fix",
-    "postinstall": "src/prisma generate"
-  },
-  "prisma": {
-    "schema": "prisma/schema.prisma"
+    "lint:fix": "eslint --fix"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +34,7 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.30.0",
     "eslint-plugin-sonarjs": "^1.0.3",
     "eslint-plugin-unicorn": "^53.0.0",
     "nodemon": "^3.1.3",

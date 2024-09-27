@@ -21,7 +21,7 @@ app.use('/api/v1', urlRoute);
 
 const start = async () => {
   try {
-    await connectDb(process.env.DATABASE_URI || '');
+    await connectDb(process.env.DATABASE_URL || '');
     app.listen(port, () => {
       logger.info(`Server is started at port: http://localhost:${port}`);
     });

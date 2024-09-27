@@ -10,3 +10,4 @@ dist
 
 *.log
 src/prisma/generated
+data
