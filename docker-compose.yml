@@ -27,4 +27,3 @@ services:
       - 8000:8000
     volumes:
       - ./src:/usr/app/src
-    command: /bin/sh -c "npm run build && npm start"
