@@ -18,7 +18,6 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to Express & TypeScript Server');
 });
 app.use('/api/v1', urlRoute);
-// Microservices vs Monoliths
 
 const start = async () => {
   try {

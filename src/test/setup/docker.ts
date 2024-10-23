@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Docker from 'dockerode';
 import { imageExists, pullImageAsync } from 'dockerode-utils';
 import logger from '../../logs/logger';
