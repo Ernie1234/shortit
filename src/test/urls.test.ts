@@ -27,7 +27,7 @@ describe('POST /shorten', () => {
 
   it('It returns a 400 error when the URL is not valid', async () => {
     const response = await factory.app.post(`${url}`).send({
-      url: 'invalid-url',
+      url: 'invalid-url', // Invalid URL format
     });
 
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
@@ -42,22 +42,26 @@ describe('POST /shorten', () => {
   });
 
   it('It returns a 400 error when the custom name is not valid', async () => {
-    const response = await factory.app.post(`${url}`).send({
-      url: exampleUrl,
-      customName: 'inv', // Example of an invalid custom name
-    });
+    const res1 = await factory.app
+      .post(`${url}`)
+      .send({ url: 'https://www.youtube.com/watch?v=xZLKALpvdBE', customName: 'cast' });
+    expect(res1.status).toBe(HTTP_STATUS.BAD_REQUEST);
+    expect(res1.body.errors).toBeDefined(); // Check that errors is defined
+    expect(res1.body.errors[0].message).toBe('Must be at least 5 letters'); // Ensure the correct message
 
-    expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-    expect(response.body.message).toBe('Must be at least 5 letters');
+    const res2 = await factory.app
+      .post(`${url}`)
+      .send({ url: 'https://www.youtube.com/watch?v=xZLKALpvdBE', customName: 'inv' });
+    expect(res2.status).toBe(HTTP_STATUS.BAD_REQUEST); // Change to BAD_REQUEST
+    expect(res2.body.errors).toBeDefined(); // Check that errors is defined
+    expect(res2.body.errors[0].message).toBe('Must be at least 5 letters'); // Check the error message
   });
 
   it('It returns a 400 error when the URL already exists', async () => {
-    // First, create a URL
     await factory.app.post(`${url}`).send({
       url: exampleUrl,
     });
 
-    // Then, try to create it again
     const response = await factory.app.post(`${url}`).send({
       url: exampleUrl,
     });
