@@ -35,11 +35,9 @@ describe('POST /shorten', () => {
   });
 
   it('It returns a 400 error when the URL is not provided', async () => {
-    const response = await factory.app
-      .post(`${url}`)
-      .send({ url: 'https://www.youtube.com/watch?v=xZLKALpvdBE', customName: ' ' });
+    const response = await factory.app.post(`${url}`).send({ customName: ' ' });
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-    expect(response.body.customName).toBe('Must be at least 5 letters');
+    expect(response.body.url).toBe('Url is required.');
   });
 
   it('It returns a 400 error when the custom name is not valid', async () => {
