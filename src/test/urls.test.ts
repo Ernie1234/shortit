@@ -61,9 +61,4 @@ describe('POST /shorten', () => {
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
     expect(response.body.message).toBe('Url already exists!');
   });
-
-  // it.todo('It returns a 400 error when the URL is not valid');
-  // it.todo('It returns a 400 error when the URL is not provided');
-  // it.todo('It returns a 400 error when the custom name is not valid');
-  // it.todo('It returns a 400 error when the URL already exists');
 });
