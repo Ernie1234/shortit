@@ -16,7 +16,7 @@ describe('POST /shorten', () => {
   });
 
   it('It creates a short URL successfully', async () => {
-    const response = await factory.app.post(`${url}`).send({
+    const response = await factory.app.post(url).send({
       url: 'https://www.google.com/search?q=google+url+shortener&oq=google+url+shortener&aqs=chrome..69i57j0l5.3808j0j7&sourceid=chrome&ie',
     });
 
