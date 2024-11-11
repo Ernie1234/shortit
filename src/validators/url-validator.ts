@@ -6,6 +6,7 @@ export const postUrlSchema = Joi.object({
     .required()
     .messages({
       'string.uri': 'Invalid URL format',
+      'string.empty': 'URL cannot be empty',
       'any.required': 'URL is required',
     }),
   customName: Joi.string().optional().min(5).message('Must be at least 5 letters'),
