@@ -31,7 +31,7 @@ describe('POST /shorten', () => {
     });
 
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-    expect(response.body.message).toBe('Error adding url');
+    expect(response.body.url).toBe('Invalid URL format. URL must start with http or https');
   });
 
   it('It returns a 400 error when the URL is not provided', async () => {
