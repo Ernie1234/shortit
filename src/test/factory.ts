@@ -8,8 +8,7 @@ import router from '../routes/url-route';
 
 const MONGO_URL = `mongodb://${testDatabaseConfig.user}:${testDatabaseConfig.password}@localhost:${testDatabaseConfig.port}/${testDatabaseConfig.database}?authSource=admin`;
 
-// eslint-disable-next-line import/prefer-default-export
-export class TestFactory {
+class TestFactory {
   private _app: express.Application;
 
   private _connection: Connection;
@@ -22,14 +21,15 @@ export class TestFactory {
 
   public async init(): Promise<void> {
     await this.startup();
+    await this.clearDatabase(); // Ensure the database is clean before tests
   }
 
   public async close(): Promise<void> {
+    await this.clearDatabase(); // Optionally clear the database on close
     await this._connection.close();
     this._server.close();
   }
 
-  // be nice to the coder, but don't be nice to the code
   private async startup() {
     try {
       const connection = await mongoose.connect(MONGO_URL);
@@ -44,4 +44,21 @@ export class TestFactory {
       throw new Error(`Error starting up the server: ${error}`);
     }
   }
+
+  private async clearDatabase() {
+    const { collections } = this._connection;
+
+    const deletePromises = Object.keys(collections).map(async (key) => {
+      try {
+        await collections[key].deleteMany({});
+      } catch (error) {
+        logger.error(`Failed to clear collection ${key}: ${error}`);
+      }
+    });
+
+    await Promise.all(deletePromises);
+  }
 }
+
+// Exporting TestFactory as the default export
+export default TestFactory;

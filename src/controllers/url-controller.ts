@@ -53,7 +53,7 @@ export const getUrls = async (req: Request, res: Response) => {
     if (!urls) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No url found!' });
 
     if (urls.length === 0) {
-      return res.status(HTTP_STATUS.NOT_FOUND).send({ message: 'No URL found!' });
+      return res.status(HTTP_STATUS.OK).send([]);
     }
 
     const successResponse = urls.map((url) => ({
@@ -73,10 +73,9 @@ export const getUrls = async (req: Request, res: Response) => {
 
 //  GET A SINGLE URL FROM THE DATABASE
 export const getUrl = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
   try {
-    const url = await Url.findById({ _id: id });
+    const { id } = req.params;
+    const url = await Url.findById(id);
 
     if (!url) return res.status(HTTP_STATUS.NOT_FOUND).send({ message: notFoundMsg });
 
@@ -112,6 +111,16 @@ export const updateUrl = async (req: Request, res: Response) => {
       return res.status(404).send({ message: notFoundMsg });
     }
 
+    if (custom) {
+      const duplicateUrl = await Url.findOne({ customName });
+      if (duplicateUrl && duplicateUrl._id.toString() !== id) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).send({
+          message: 'Custom name already exists',
+          successResponse: { customName }, // Include the custom name in the response
+        });
+      }
+    }
+
     const updatedUrl = await Url.findOneAndUpdate(
       { _id: id },
       {
@@ -119,6 +128,7 @@ export const updateUrl = async (req: Request, res: Response) => {
         shortUrl,
         originalUrl: url,
       },
+      { new: true },
     );
 
     if (updatedUrl?.customName === '' || updatedUrl?.customName === null) {
