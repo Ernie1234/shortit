@@ -1,14 +1,11 @@
 import HTTP_STATUS from '../utils/http-status';
 import TestFactory from './factory';
 import Url from '../models/url';
-import logger from '../logs/logger';
 import { notFoundMsg } from '../constants/messages';
 
-const url = '/api/v1/shorten';
+const postUrl = '/api/v1/shorten';
 const exampleUrl = 'https://www.example.com';
-const shortUrl = 'short.ly/example';
 const endpoint = '/api/v1/urls';
-const customName = 'existing-name';
 
 describe('POST /shorten', () => {
   const factory = new TestFactory();
@@ -22,7 +19,7 @@ describe('POST /shorten', () => {
   });
 
   it('It creates a short URL successfully', async () => {
-    const response = await factory.app.post(url).send({
+    const response = await factory.app.post(postUrl).send({
       url: 'https://www.google.com/search?q=google+url+shortener&oq=google+url+shortener&aqs=chrome..69i57j0l5.3808j0j7&sourceid=chrome&ie',
     });
 
@@ -32,7 +29,7 @@ describe('POST /shorten', () => {
   });
 
   it('It returns a 400 error when the URL is not valid', async () => {
-    const response = await factory.app.post(`${url}`).send({
+    const response = await factory.app.post(`${postUrl}`).send({
       url: 'invalid-url',
     });
 
@@ -41,26 +38,25 @@ describe('POST /shorten', () => {
   });
 
   it('It returns a 400 error when the URL is not provided', async () => {
-    const response = await factory.app.post(`${url}`).send({ customName: ' ' });
+    const response = await factory.app.post(`${postUrl}`).send({ customName: ' ' });
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
     expect(response.body.url).toBe('Url is required.');
   });
 
   it('It returns a 400 error when the custom name is not valid', async () => {
     const res1 = await factory.app
-      .post(`${url}`)
+      .post(`${postUrl}`)
       .send({ url: 'https://www.youtube.com/watch?v=xZLKALpvdBE', customName: 'cast' });
     expect(res1.status).toBe(HTTP_STATUS.BAD_REQUEST);
-    // expect(res1.body.errors).toBeDefined(); // Check that errors is defined
     expect(res1.body.customName).toBe('Must be at least 5 letters');
   });
 
   it('It returns a 400 error when the URL already exists', async () => {
-    await factory.app.post(`${url}`).send({
+    await factory.app.post(`${postUrl}`).send({
       url: exampleUrl,
     });
 
-    const response = await factory.app.post(`${url}`).send({
+    const response = await factory.app.post(`${postUrl}`).send({
       url: exampleUrl,
     });
 
@@ -74,7 +70,6 @@ describe('GET /urls', () => {
 
   beforeEach(async () => {
     await factory.init();
-    await Url.deleteMany({}); // Clear the database before each test
   });
 
   afterEach(async () => {
@@ -88,6 +83,7 @@ describe('GET /urls', () => {
   });
 
   it('should return an array of urls', async () => {
+    const shortUrl = 'short.ly/example';
     await Url.create({
       originalUrl: exampleUrl,
       shortUrl,
@@ -112,20 +108,14 @@ describe('GET /urls/:id', () => {
   });
 
   it('should return a single url', async () => {
-    const res = await factory.app.post(url).send({
+    const res = await factory.app.post(postUrl).send({
       url: exampleUrl,
     });
 
-    const createdUrl = res.body.data;
-    expect(createdUrl).toBeDefined(); // Check that createdUrl is defined
+    expect(res.status).toBe(HTTP_STATUS.CREATED);
+    expect(res.body.data).toHaveProperty('_id');
 
-    if (!createdUrl) {
-      logger.error('URL creation failed, no data returned.');
-      throw new Error('URL creation failed, no data returned.');
-    }
-
-    const { _id } = createdUrl;
-    expect(_id).toBeDefined();
+    const { _id } = res.body.data;
 
     const response = await factory.app.get(`${endpoint}/${_id}`);
 
@@ -151,11 +141,13 @@ describe('PUT /urls/:id', () => {
   afterEach((done) => {
     factory.close().then(done);
   });
+
   it('should update a single url', async () => {
-    const responsePost = await factory.app.post(url).send({
+    const responsePost = await factory.app.post(postUrl).send({
       url: exampleUrl,
     });
     const { _id } = responsePost.body.data;
+    expect(responsePost.status).toBe(HTTP_STATUS.CREATED);
 
     const newUrl = 'https://www.updated-example.com';
     const response = await factory.app.put(`${endpoint}/${_id}`).send({
@@ -176,27 +168,30 @@ describe('PUT /urls/:id', () => {
   });
 
   it('should return an error if the request body is invalid', async () => {
-    const responsePost = await factory.app.post(url).send({
+    const responsePost = await factory.app.post(postUrl).send({
       url: exampleUrl,
     });
     const { _id } = responsePost.body.data;
 
     const response = await factory.app.put(`${endpoint}/${_id}`).send({
-      url: 'invalid-url', // Invalid URL format
+      url: 'invalid-url',
     });
     expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
     expect(response.body.url).toBe('Invalid URL format. URL must start with http or https');
   });
 
   it('should return an error if the custom name already exists', async () => {
-    await factory.app.post(url).send({
+    const customName = 'existing-name';
+    const res1 = await factory.app.post(postUrl).send({
       url: exampleUrl,
       customName,
     });
+    expect(res1.status).toBe(HTTP_STATUS.CREATED);
 
-    const responsePost = await factory.app.post(url).send({
+    const responsePost = await factory.app.post(postUrl).send({
       url: 'https://different-example.com',
     });
+    expect(res1.status).toBe(HTTP_STATUS.CREATED);
 
     const { _id } = responsePost.body.data;
     const response = await factory.app.put(`${endpoint}/${_id}`).send({
@@ -220,10 +215,13 @@ describe('DELETE /urls/:id', () => {
   afterEach((done) => {
     factory.close().then(done);
   });
+
   it('should delete a single url', async () => {
-    const responsePost = await factory.app.post(url).send({
+    const responsePost = await factory.app.post(postUrl).send({
       url: exampleUrl,
     });
+    expect(responsePost.status).toBe(HTTP_STATUS.CREATED);
+
     const { _id } = responsePost.body.data;
 
     const response = await factory.app.delete(`${endpoint}/${_id}`);
