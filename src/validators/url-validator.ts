@@ -12,8 +12,8 @@ export const postUrlSchema = Joi.object({
 });
 
 export const updateUrlSchema = Joi.object({
-  url: Joi.string()
-    .optional()
-    .uri({ scheme: ['http', 'https'] }),
+  url: urlSchema.required().messages({
+    'any.required': 'Url is required.',
+  }),
   customName: Joi.string().optional().min(5).message('Must be at least 5 letters'),
 });
