@@ -1,0 +1,20 @@
+services:
+  mongo:
+    type: 'database' # Using Render's managed database service
+    name: 'shortit-mongo'
+    plan: 'free' # Choose your plan based on your needs
+    env: 'mongodb'
+    databaseUrl: 'mongodb://<username>:<password>@<host>:<port>/<database>' # Placeholder, see below for details
+
+  server:
+    type: 'webservice' # Define the service as a web service
+    name: 'shortit-server'
+    env: 'node' # Specify the Node.js environment
+    buildCommand: 'npm install && npm run build' # Install dependencies and build the project
+    startCommand: 'npm start' # Start the server
+    envVars:
+      MONGO_URI: 'mongodb://shortit-mongo:27017' # Connection string for MongoDB
+      MONGO_USERNAME: ${MONGO_USERNAME} # Reference environment variables from Render dashboard
+      MONGO_PASSWORD: ${MONGO_PASSWORD} # Reference environment variables from Render dashboard
+    plan: 'free' # Choose your plan
+    servicePort: 8000 # Port your service runs on
