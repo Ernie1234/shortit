@@ -19,10 +19,8 @@ app.get('/', (req: Request, res: Response) => {
 });
 app.use('/api/v1', urlRoute);
 
-
 const start = async () => {
   try {
-    console.log("DATABASE URL here: ",process.env.DATABASE_URL)
     await connectDb(process.env.DATABASE_URL || '');
 
     app.listen(port, () => {
