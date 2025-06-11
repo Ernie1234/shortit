@@ -10,8 +10,8 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
-    volumes:
-      - ./data:/data/db
+    # volumes:
+    #   - ./data:/data/db
   server:
     container_name: 'shortit-server'
     build:
@@ -25,6 +25,6 @@ services:
       - ${PORT}
     ports:
       - 8000:8000
-    volumes:
-      - .:/usr/app
-      - /usr/app/node_modules
+    # volumes:
+    #   - .:/usr/app
+    #   - /usr/app/node_modules
