@@ -26,4 +26,5 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./src:/usr/app/src
+      - .:/usr/app
+      - /usr/app/node_modules

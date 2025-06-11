@@ -2,12 +2,19 @@ FROM node:alpine
 
 WORKDIR /usr/app
 
-COPY package*.json .
+# Copy package files
+COPY package*.json ./
 
+# Install dependencies
 RUN npm ci
 
-COPY . .
+# Copy tsconfig and source files
+COPY tsconfig.json ./
+COPY src/ ./src/
 
-RUN npm run build 
+# Build the application
+RUN npm run build
 
-CMD ["node", "dist/index.js"]
+EXPOSE 8000
+
+CMD ["npm", "start"]
